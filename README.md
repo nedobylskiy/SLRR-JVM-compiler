@@ -74,6 +74,8 @@ await writeFile('MyPart.class', result.bytes);
 
 The parser and emitter compile all 3,454 `.java` files in one installed Build 940 game tree, plus all 44 sources in a separate M20B25 mod. All these outputs pass strict parsing by [SLRR-JVM-decompiler](https://github.com/nedobylskiy/SLRR-JVM-decompiler). For 2,819 stock source files with an adjacent shipped `.class`, the current structural audit finds matching declarations for all 2,819, matching TREE operations and operands for 2,546, and byte-identical files for 1,919. These results describe this specific installed game and are not a guarantee that every generated script executes identically in the game.
 
+Manual runtime check in the original Build 940 VM: `MainMenu.java` was compiled with a distinct version label, its original `.java` and `.class` were hidden, and the generated `MainMenu.class` was installed. The new label appeared in game and the menu functions were exercised without an observed failure. This multi-class file is not byte-identical to the shipped one, so this check confirms that at least some binary and TREE differences do not prevent execution. It does not validate other generated classes.
+
 Known gaps: resource IDs that refer to external RPK packs require a `resolveResource` callback for exact mapping; some overloads and member references remain unresolved; a few control-flow patterns differ; and float literal conversion varies across shipped classes. The CLI reports syntactic or generation failures, but a successful compile does not perform game-runtime validation. Keep original files and write generated classes to a separate output directory while testing.
 
 ## License
