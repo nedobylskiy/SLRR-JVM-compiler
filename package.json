@@ -1,0 +1,18 @@
+{
+  "name": "slrr-jvm-compiler",
+  "version": "0.1.0",
+  "description": "Native Node.js compiler for Street Legal Racing: Redline Java-like scripts",
+  "type": "module",
+  "bin": { "slrr-compile": "./dist/src/cli.js" },
+  "exports": { ".": "./dist/src/index.js" },
+  "types": "./dist/src/index.d.ts",
+  "files": ["dist/src", "README.md", "LICENSE"],
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepare": "npm run build",
+    "test": "npm run build && node --test dist/test/*.test.js"
+  },
+  "devDependencies": { "@types/node": "^24.0.0", "typescript": "^5.9.0" },
+  "license": "MIT"
+}
