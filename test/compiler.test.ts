@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
 import { compileSource } from '../src/compiler.js';
-import { readDeclarations } from '../src/classes.js';
+import { ClassIndex, readDeclarations } from '../src/classes.js';
 import { floatLiteralBits } from '../src/floatlit.js';
 import { parseSource } from '../src/source.js';
 
@@ -46,4 +46,19 @@ test('parser accepts system root wildcard imports from system scripts', () => {
   const program = parseSource('import system:*; public class Math { public native static float random(); }');
   assert.deepEqual(program.imports, ['system:*']);
   assert.equal(program.classes[0].members[0].kind, 'method');
+});
+
+test('package-less system sources can use their game class namespace', () => {
+  const source = 'import system:util.*; public class Vector { public int count(int n) { while (n-- > 0) {} return n; } }';
+  const result = compileSource(source, { packageName: 'java.util' });
+  assert.equal(result.ok, true, result.diagnostics.join('; '));
+  assert.deepEqual(result.classNames, ['java.util.Vector']);
+  assert.equal(readDeclarations(result.bytes)[0].name, 'java.util.Vector');
+});
+
+test('system wildcard imports resolve to game class namespaces', () => {
+  const index = new ClassIndex();
+  index.add({ name: 'java.io.File', interfaces: [], fields: [], methods: [] });
+  const program = parseSource('import system:io.*; public class Reader {}');
+  assert.equal(index.resolveType('File', program.classes[0], program), 'java.io.File');
 });

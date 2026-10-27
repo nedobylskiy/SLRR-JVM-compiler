@@ -88,8 +88,9 @@ export class ClassIndex {
     const own = `${program.packageName}.${name}`;
     if (this.get(own)) return this.get(own)!.name;
     for (const imported of program.imports) {
-      const candidate = imported.endsWith('.*') ? imported.slice(0, -1) + name : imported;
-      if ((imported.endsWith('.*') || imported.endsWith(`.${name}`)) && this.get(candidate)) return this.get(candidate)!.name;
+      const normalized = imported.startsWith('system:') ? `java.${imported.slice('system:'.length)}` : imported;
+      const candidate = normalized.endsWith('.*') ? normalized.slice(0, -1) + name : normalized;
+      if ((normalized.endsWith('.*') || normalized.endsWith(`.${name}`)) && this.get(candidate)) return this.get(candidate)!.name;
     }
     const lang = `java.lang.${name}`;
     return this.get(lang)?.name;

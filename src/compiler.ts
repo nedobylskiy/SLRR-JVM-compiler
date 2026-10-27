@@ -15,6 +15,8 @@ const primitive: Record<string, string> = { void: 'V', int: 'I', float: 'F', dou
 export interface CompileOptions {
   build?: number;
   floatMode?: FloatMode;
+  /** Package for package-less sources whose class identity comes from the game script path. */
+  packageName?: string;
   /** Resolve an external simple or qualified type to its full SLRR class name. */
   resolveType?: (name: string, context: SourceClass, program: Program) => string | undefined;
   /** Return a known field descriptor. Undefined fields are emitted as late-bound names. */
@@ -458,6 +460,11 @@ export function compileSource(source: string | Uint8Array, options: CompileOptio
   try {
     const text = typeof source === 'string' ? source : Buffer.from(source).toString('latin1');
     const program = parseSource(text);
+    if (options.packageName !== undefined) {
+      if (program.packageName && program.packageName !== options.packageName) throw new Error(`Source declares package ${program.packageName}, expected ${options.packageName}`);
+      program.packageName = options.packageName;
+      for (const cls of program.classes) cls.fullName = options.packageName ? `${options.packageName}.${cls.name}` : cls.name;
+    }
     const blobs = program.classes.map(cls => compileClass(cls, program, options));
     return { ok: true, bytes: Buffer.concat(blobs), classNames: program.classes.map(x => x.fullName), diagnostics };
   } catch (error) {

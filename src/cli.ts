@@ -6,7 +6,7 @@ import { compileSource } from './compiler.js';
 import type { FloatMode } from './floatlit.js';
 
 function usage(): never {
-  console.error('Usage: slrr-compile [--root GAME] [--out CACHE | --check | --compare] [--float A|B|C|D] [--build N] [SOURCE.java ...]');
+  console.error('Usage: slrr-compile [--root GAME] [--out CACHE | --check | --compare] [--float A|B|C|D] [--build N] [--package NAME] [SOURCE.java ...]');
   process.exit(2);
 }
 
@@ -28,7 +28,7 @@ function outputPath(source: string, root: string | undefined, out: string | unde
 
 async function main(): Promise<void> {
   const args = process.argv.slice(2), files: string[] = [];
-  let root: string | undefined, out: string | undefined, check = false, compare = false, floatMode: FloatMode = 'B', build = 0x24f9d;
+  let root: string | undefined, out: string | undefined, packageName: string | undefined, check = false, compare = false, floatMode: FloatMode = 'B', build = 0x24f9d;
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
     if (arg === '--root') root = resolve(args[++i] ?? usage());
@@ -37,11 +37,13 @@ async function main(): Promise<void> {
     else if (arg === '--compare') compare = true;
     else if (arg === '--float') { const mode = args[++i]; if (!['A', 'B', 'C', 'D'].includes(mode)) usage(); floatMode = mode as FloatMode; }
     else if (arg === '--build') { build = Number(args[++i] ?? usage()); if (!Number.isInteger(build) || build < 0 || build > 0xffffffff) usage(); }
+    else if (arg === '--package') packageName = args[++i] ?? usage();
     else if (arg.startsWith('-')) usage();
     else files.push(resolve(arg));
   }
   if (Number(check) + Number(compare) + Number(!!out) !== 1) usage();
   if (!files.length) { if (!root) usage(); for await (const file of sources(root)) files.push(file); }
+  if (packageName !== undefined && files.length !== 1) { console.error('--package requires exactly one source file'); process.exit(2); }
   if (root && out && (relative(root, out) === '' || !relative(root, out).startsWith('..'))) {
     console.error('Output directory must be outside the game root'); process.exit(2);
   }
@@ -51,7 +53,7 @@ async function main(): Promise<void> {
   for (const file of files) {
     try {
       if (!(await stat(file)).isFile()) throw new Error('Not a file');
-      const result = compileSource(await readFile(file), { ...index.compileOptions(), build, floatMode });
+      const result = compileSource(await readFile(file), { ...index.compileOptions(), build, floatMode, packageName });
       if (!result.ok) throw new Error(result.diagnostics.join('; '));
       const target = outputPath(file, root, out);
       if (compare) {
