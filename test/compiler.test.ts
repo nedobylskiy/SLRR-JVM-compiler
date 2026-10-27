@@ -41,3 +41,9 @@ test('parser accepts SLRR resource ids, member calls and switch', () => {
   assert.equal(result.ok, true, result.diagnostics.join('; '));
   assert.equal(readDeclarations(result.bytes)[0].name, 'example.Flow');
 });
+
+test('parser accepts system root wildcard imports from system scripts', () => {
+  const program = parseSource('import system:*; public class Math { public native static float random(); }');
+  assert.deepEqual(program.imports, ['system:*']);
+  assert.equal(program.classes[0].members[0].kind, 'method');
+});

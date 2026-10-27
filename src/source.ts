@@ -67,7 +67,7 @@ class Parser {
   name(): string { const t = this.peek(); if (t.kind !== 'id' || keywords.has(t.text)) this.error(`Expected identifier, got ${t.text}`); this.i++; return t.text; }
   qualified(): string {
     let result = this.name();
-    if (this.eat(':')) result += ':' + this.name();
+    if (this.eat(':')) result += ':' + (this.eat('*') ? '*' : this.name());
     while (this.eat('.')) result += '.' + (this.eat('*') ? '*' : this.name());
     return result;
   }
